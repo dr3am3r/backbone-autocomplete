@@ -1,6 +1,6 @@
 var AutoCompleteItemView = Backbone.View.extend({
     tagName: "li",
-    template: _.template('<a href="#"><%= label %></a>'),
+    template: _.template('<a href="javascript:;;"><img src="<%= avatar %>" /> <%= label %></a>'),
 
     events: {
         "click": "select"
@@ -8,11 +8,16 @@ var AutoCompleteItemView = Backbone.View.extend({
 
     render: function () {
         this.$el.html(this.template({
-            "label": this.model.label()
+            "label": this.model.label(),
+            "avatar": this.model.get('profile').avatar_url_small
         }));
         return this;
     },
-
+    
+    initialize: function(options) {
+        this.options = options;
+    },
+    
     select: function () {
         this.options.parent.hide().select(this.model);
         return false;
@@ -29,7 +34,10 @@ var AutoCompleteView = Backbone.View.extend({
     minKeywordLength: 2,
     currentText: "",
     itemView: AutoCompleteItemView,
-
+    offline: true,
+    
+    onSelectCallback: null,
+    
     initialize: function (options) {
         _.extend(this, options);
         this.filter = _.debounce(this.filter, this.wait);
@@ -68,8 +76,8 @@ var AutoCompleteView = Backbone.View.extend({
     },
 
     filter: function (keyword) {
-    	var keyword = keyword.toLowerCase();
-        if (this.model.url) {
+      var keyword = keyword.toLowerCase();
+        if (this.model.url && !this.offline) {
 
             var parameters = {};
             parameters[this.queryParameter] = keyword;
@@ -153,6 +161,10 @@ var AutoCompleteView = Backbone.View.extend({
     },
 
     // callback definitions
-    onSelect: function () {}
+    onSelect: function (model) {
+      if (typeof this.onSelectCallback === 'function') {
+        this.onSelectCallback.call(null, model);
+      }
+    }
 
 });
